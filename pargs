@@ -14,7 +14,7 @@ our $reset = color('reset');
 
 my $SEP;
 my $n;
-my $replace;
+my $replace = '%';
 
 GetOptions(
     'delimiter=s' => \$SEP,
@@ -28,7 +28,7 @@ my @args = ();
 if ( defined($SEP) ) {
     my @lines = <STDIN>;
     $_ = join "\n", @lines;
-    say STDERR qq(${red}use separator `$_`$reset);
+    say STDERR qq(${red}use separator `$SEP`$reset);
     push @args, split( $SEP, $_ );
 }
 else {
@@ -42,7 +42,21 @@ if ( @cmd == 0 ) {
     say STDERR qq(${red}No command give, fallback to `echo`$reset);
 }
 
-if ( defined $n ) {
+# NOTE:
+# 1. use replace string, if exists, ignore arg number
+# 2. if not replace string present, check arg number
+# 3. no replace or arg number, append all parsed arguments to given command
+
+if ( my $num = grep { $_ eq $replace } @cmd ) {
+    while ( @_ = splice( @args, 0, $num ) ) {
+        my @to_run = @cmd;
+        @to_run = map { $_ eq $replace ? shift @_ : $_; } @to_run;
+        say STDERR qq(${red}run command: `@{to_run}`$reset);
+        start( \@to_run );
+    }
+    wait;
+}
+elsif ( defined $n ) {
     while ( @_ = splice( @args, 0, $n ) ) {
         my @to_run = @cmd;
         push @to_run, @_;
