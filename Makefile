@@ -1,7 +1,7 @@
 all: install
 
 install:
-	install ./pargs ~/.local/bin/pargs
+	install ./pargs.pl ~/.local/bin/pargs
 	ln -s ~/.local/bin/pargs ~/.local/bin/xargs
 
 uninstall:
