@@ -3,57 +3,56 @@
 use strict;
 use warnings;
 use utf8;
-use v5.10; # in order to use `say` safely
+use v5.10;    # in order to use `say` safely
 use Data::Dumper;
 use Term::ANSIColor;
-
+use IPC::Run qw(start);
 use Getopt::Long;
-#use Data::Printer;
+
+our $red   = color('red');
+our $reset = color('reset');
 
 my $SEP;
 my $n;
 my $replace;
 
 GetOptions(
-	'delimiter=s' => \$SEP,
-	'n=i' => \$n,
-	'replace=s' => \$replace,
+    'delimiter=s' => \$SEP,
+    'n=i'         => \$n,
 );
 
-&pe ('sep', $SEP);
-&pe ('n', $n);
-
-die 'n should not be 0' if $n && $n == 0;
+die qq(${red}n should not be 0$reset) if $n && $n == 0;
 
 my @args = ();
 
-if (defined($SEP)){
-	my @lines = <STDIN>;
-	$_ = join "\n", @lines;
-	push @args, split($SEP, $_);
+if ( defined($SEP) ) {
+    my @lines = <STDIN>;
+    $_ = join "\n", @lines;
+    say STDERR qq(${red}use separator `$_`$reset);
+    push @args, split( $SEP, $_ );
 }
-else{
-	chomp(@args = <STDIN>);
+else {
+    say STDERR qq(${red}use default separator `\\n`$reset);
+    chomp( @args = <STDIN> );
 }
 
 my @cmd = @ARGV;
-if (@cmd == 0){
-	push @cmd, 'echo';
-}
-push @cmd, @args;
-
-if (defined $n){
-	while (@_ = splice(@args,0, $n)){
-		# TODO: sub replace_str with args
-		#system @_;
-		say STDERR 'Not implemented';
-	}
-}
-else{
-	exec @cmd;
+if ( @cmd == 0 ) {
+    push @cmd, 'echo';
+    say STDERR qq(${red}No command give, fallback to `echo`$reset);
 }
 
-sub pe{
-	$_ = shift;
-	say color('red'), "$_: ", (Dumper @_), color('reset');
+if ( defined $n ) {
+    while ( @_ = splice( @args, 0, $n ) ) {
+        my @to_run = @cmd;
+        push @to_run, @_;
+        say STDERR qq(${red}run command: `@{to_run}`$reset);
+        start( \@to_run );
+    }
+    wait;
+}
+else {
+    push @cmd, @args;
+    say STDERR qq(${red}run command: `@{cmd}`$reset);
+    exec @cmd;
 }
