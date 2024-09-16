@@ -20,7 +20,7 @@ GetOptions(
     'delimiter=s' => \$SEP,
     'n=i'         => \$n,
     'I=s'         => \$replace,
-    'D'           => \$debug,
+    'Debug'           => \$debug,
 );
 
 $replace = '{}' unless defined($replace);
